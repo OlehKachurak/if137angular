@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CityDestinationComponent } from './city-destination.component';
-import { BrowserModule } from '@angular/platform-browser';
-import { AppRoutingModule } from '../../app-routing.module';
+import { BrowserModule} from '@angular/platform-browser';
+import { AppRoutingModule } from 'src/app/app-routing.module';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatSelectModule } from '@angular/material/select';
@@ -17,21 +16,22 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { NgxsModule, Store } from '@ngxs/store';
-import { appState } from '../../store/app.state';
-import { NgxsLoggerPluginModule } from '@ngxs/logger-plugin';
-import { CUSTOM_ELEMENTS_SCHEMA, DebugElement } from '@angular/core';
-import { Subject } from 'rxjs';
-import { RequestDataState } from '../../store/request-data.state';
-import { FlightInfoState } from '../../store/flight-info.state';
-import { FlightsInfoService } from '../../services/flights-info.service';
-import { RequestDataService } from '../../services/request-data.service';
-import { SpecialOffersComponent } from '../special-offers/special-offers.component';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { CitiesModel } from '../../models/cities.model';
-import { GetCities } from '../../store/request-data.action';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { NgxsModule, Store } from '@ngxs/store';
+import { NgxsLoggerPluginModule } from '@ngxs/logger-plugin';
+import { RequestDataState } from 'src/app/store/request-data.state';
+import { Subject } from 'rxjs';
+import { FlightsInfoService } from 'src/app/services/flights-info.service';
+import { CUSTOM_ELEMENTS_SCHEMA, DebugElement } from '@angular/core';
+import { RequestDataService } from 'src/app/services/request-data.service';
+import { FlightInfoState } from 'src/app/store/flight-info.state';
+import { GetPopularDestinations} from 'src/app/store/flight-info.action';
+import {RouterTestingModule} from "@angular/router/testing";
+import {SetFormDate} from "../../store/request-data.action";
+import {HttpClientModule} from "@angular/common/http";
+import {CityDestinationComponent} from "./city-destination.component";
 
 describe('CityDestinationComponent', () => {
   let component: CityDestinationComponent;
@@ -41,20 +41,30 @@ describe('CityDestinationComponent', () => {
   let store: any;
   let flightsInfoServiceMock: any;
   let requestDataService: any;
-  let citiesSubject = new Subject();
+  let popularDestinations = new Subject();
+  let currency = new Subject();
+  let windowMock: any;
 
   beforeEach(() => {
+    windowMock = {
+      scroll: jasmine.createSpy("scroll")
+    };
     storeMock = {
       select: jasmine
         .createSpy('select')
-        .withArgs(RequestDataState.cities)
-        .and.returnValue(citiesSubject.asObservable()),
+        .withArgs(RequestDataState.currency)
+        .and.returnValue(currency.asObservable())
+        .withArgs(FlightInfoState.popularDestinations)
+        .and.returnValue(popularDestinations.asObservable()),
+      dispatch: jasmine.createSpy('dispatch'),
       selectSnapshot: jasmine.createSpy('selectSnapshot'),
     };
     flightsInfoServiceMock = jasmine.createSpy().and.returnValue({});
 
     TestBed.configureTestingModule({
       imports: [
+        RouterTestingModule,
+        HttpClientModule,
         BrowserModule,
         AppRoutingModule,
         BrowserAnimationsModule,
@@ -78,20 +88,22 @@ describe('CityDestinationComponent', () => {
         MatCardModule,
         MatProgressSpinnerModule,
         MatToolbarModule,
-        NgxsModule.forRoot(appState, {
-          developmentMode: true,
-        }),
+        NgxsModule.forRoot(),
         NgxsLoggerPluginModule.forRoot(),
       ],
       declarations: [CityDestinationComponent],
       providers: [
-        { provide: Store, useValue: storeMock },
-        { provide: FlightsInfoService, useValue: flightsInfoServiceMock },
-        { provide: RequestDataService, useValue: requestDataService },
+        {provide: Store, useValue: storeMock},
+        {provide: 'Window', useValue: windowMock},
+        {provide: FlightsInfoService, useValue: flightsInfoServiceMock},
+        {provide: RequestDataService, useValue: requestDataService},
       ],
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
-    }).compileComponents();
+    })
+      .compileComponents();
+  });
 
+  beforeEach(() => {
     fixture = TestBed.createComponent(CityDestinationComponent);
     debugElement = fixture.debugElement;
     store = TestBed.get(Store);
@@ -100,34 +112,65 @@ describe('CityDestinationComponent', () => {
   });
 
   afterAll(() => {
-    citiesSubject.complete();
+    currency.complete();
+    popularDestinations.complete();
   });
 
   it('should create', () => {
     expect(component).toBeTruthy();
   });
 
-  describe('#ngOnit', () => {
-    beforeEach(() => {});
+
+  describe('#ngOnInit', () => {
+    beforeEach(() => {
+      currency.next({
+        code: "WAW",
+        name: "Warsaw",
+      });
+    });
+    describe('#ngOninit', () => {
+      it('should dispatch GetPopularDestination with appropriate params', () => {
+        component.ngOnInit();
+        expect(store.dispatch).toHaveBeenCalledWith(
+          new GetPopularDestinations(['IEV', 'LWO', 'DNK', 'ODS']
+          )
+        )
+      })
+    })
   });
 
-  describe('#getCityNameByKey', () => {
-    beforeEach(() => {
-      store.selectSnapshot = jasmine
-        .createSpy('selectSnapshot')
+  describe('# selectDestination', () => {
+    it('#should dispatch  SetFormDate with appropriate params', () => {
+      component.selectedCities = 'LWO';
+      component.selectedDestinstion = 'WAW';
+
+      storeMock.selectSnapshot = jasmine.createSpy('selectSnapshot')
         .and.returnValue({
-          code: 'IEV',
-          name: 'KYIV',
-        });
-    });
-    it('should return GetCities' + ' with selected name', function () {
-      // component.getCityNameByKey("IEV");
-      expect(store.selectSnapshot).toHaveBeenCalledWith(
-        new GetCities({
-          code: 'IEV',
-          name: 'KYIV',
+          startDate: new Date(2022, 1, 11),
+          endDate: new Date(2022, 1, 13)
+        })
+      component.selectDestination({
+        origin: 'LWO',
+        originName: 'Lviv',
+        destination: 'WAW',
+        destinationName: 'Warsaw'
+      } as any);
+
+      expect(store.dispatch).toHaveBeenCalledWith(
+        new SetFormDate({
+          destinationFrom: {
+            name: 'Lviv',
+            code: 'LWO',
+          },
+          destinationTo: {
+            name: 'Warsaw',
+            code: 'WAW',
+          },
+          endDate: new Date(2022, 1, 11),
+          startDate: new Date(2022, 1, 13),
         })
       );
     });
   });
 });
+
