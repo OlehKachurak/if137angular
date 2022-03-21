@@ -510,7 +510,7 @@ export class FlightInfoState {
         Object.keys(popularDestinations)
           .sort()
           .forEach((key: string) => {
-            if (popularDestinations[key].length > 3) {
+            if (popularDestinations[key].length > 3 && key !== "MOW") {
               popularDestinations[key].forEach((item: DestinationPopular) => {
                 item.originName = this.getCityNameByKey(item.origin);
                 item.destinationName = this.getCityNameByKey(item.destination);
@@ -557,7 +557,7 @@ export class FlightInfoState {
   getCityByCode(cityCode: string): CitiesModel {
     const cities = this.store.selectSnapshot(RequestDataState.cities);
     const matchedCity = cities.find(
-      (city: CitiesModel) => city.code === cityCode
+      (city: CitiesModel) => city.code === cityCode && city.code !== 'MOW'
     );
     return matchedCity;
   }

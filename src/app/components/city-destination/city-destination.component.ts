@@ -28,7 +28,7 @@ export class CityDestinationComponent implements OnInit {
   @Select(FlightInfoState.loading)
   loading$: Observable<any>;
 
-  private popularDestinationCities = ['IEV', 'LWO', 'DNK', 'ODS'];
+  private popularDestinationCities = ['IEV', 'LWO', 'DNK', 'ODS','HRK'];
   constructor(private store: Store, @Inject('Window') private window: Window) {}
 
   items: GetDestinationPopular[] = [];
