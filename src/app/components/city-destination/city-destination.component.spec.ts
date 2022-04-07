@@ -13,7 +13,7 @@ import { CityDestinationComponent } from './city-destination.component';
 
 
 
-describe('CityDestinationComponent', () => {
+fdescribe('CityDestinationComponent', () => {
   let component: CityDestinationComponent;
   let fixture: ComponentFixture<CityDestinationComponent>;
   let debugElement: DebugElement;
@@ -42,7 +42,7 @@ describe('CityDestinationComponent', () => {
       dispatch: jasmine.createSpy('dispatch'),
     };
     flightsInfoServiceMock = jasmine.createSpy().and.returnValue({});
-    currencySubject.next('USD')
+    currencySubject.next('EUR')
 
     TestBed.configureTestingModule({
       imports: [
@@ -81,7 +81,7 @@ describe('CityDestinationComponent', () => {
     it('should dispatch GetPopularDestination with appropriate params', () => {
       component.ngOnInit();
       expect(store.dispatch).toHaveBeenCalledWith(
-        new GetPopularDestinations(['IEV', 'LWO', 'DNK', 'ODS']
+        new GetPopularDestinations(['IEV', 'LWO', 'DNK', 'ODS','HRK']
         )
       )
     })
